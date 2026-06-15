@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DET-FIN-RBL-001 · Calculadora de rebalanceo Uniswap v3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --rojo:#E02020; --negro:#0A0A0A; --gris:#666666; --gris-cl:#E4E4E4;
+    --blanco:#FFFFFF; --fondo:#F4F4F2; --tinta-rojo:#7a0f0f;
+    --disp:'Rajdhani',sans-serif; --mono:'JetBrains Mono',monospace; --texto:'Open Sans',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--fondo);color:var(--negro);font-family:var(--texto);font-size:15px;line-height:1.6;padding:24px 16px;display:flex;justify-content:center}
+  .wrap{width:100%;max-width:840px}
+
+  header{border-top:4px solid var(--rojo);background:var(--blanco);padding:18px 22px;border:1px solid var(--gris-cl);border-top:4px solid var(--rojo)}
+  .brand{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px}
+  .brand h1{font-family:var(--disp);font-weight:700;font-size:26px;letter-spacing:.04em;line-height:1}
+  .brand h1 span{color:var(--rojo)}
+  .slogan{font-family:var(--disp);font-weight:500;font-size:14px;color:var(--gris);letter-spacing:.06em}
+  .meta{margin-top:14px;display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--gris-cl);font-family:var(--mono);font-size:11px}
+  .meta div{padding:6px 12px;border-right:1px solid var(--gris-cl);flex:1;min-width:120px}
+  .meta div:last-child{border-right:none}
+  .meta b{display:block;color:var(--gris);font-weight:500;text-transform:uppercase;letter-spacing:.08em;font-size:10px}
+
+  .panel{background:var(--blanco);border:1px solid var(--gris-cl);border-top:none;padding:22px}
+  h2{font-family:var(--disp);font-weight:600;font-size:18px;letter-spacing:.03em;text-transform:uppercase;margin-bottom:4px}
+  .lead{color:var(--gris);font-size:13.5px;margin-bottom:18px}
+
+  .seg{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1.5px solid var(--negro);margin-bottom:22px}
+  .seg button{font-family:var(--disp);font-weight:600;font-size:14px;letter-spacing:.03em;text-transform:uppercase;padding:13px 10px;background:var(--blanco);border:none;cursor:pointer;color:var(--negro);transition:.15s;border-right:1.5px solid var(--negro)}
+  .seg button:last-child{border-right:none}
+  .seg button.on{background:var(--negro);color:var(--blanco)}
+  .seg button .sub{display:block;font-family:var(--mono);font-size:10px;font-weight:400;letter-spacing:0;text-transform:none;opacity:.7;margin-top:2px}
+
+  .grp-title{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--rojo);margin:6px 0 10px;font-weight:700}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:8px}
+  .field label{display:block;font-size:12.5px;color:var(--gris);margin-bottom:5px;font-weight:500}
+  .field input,.field select{width:100%;font-family:var(--mono);font-size:15px;padding:9px 11px;border:1px solid var(--gris-cl);background:var(--blanco);color:var(--negro);border-radius:0}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--rojo);box-shadow:0 0 0 2px rgba(224,32,32,.15)}
+
+  .warn{font-family:var(--mono);font-size:12px;color:var(--tinta-rojo);margin-top:12px;min-height:18px}
+
+  .results{margin-top:24px}
+  .hero{background:var(--negro);color:var(--blanco);padding:18px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+  .hero .k{font-family:var(--disp);font-weight:500;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:#bbb}
+  .hero .v{font-family:var(--mono);font-weight:700;font-size:30px;color:var(--rojo);line-height:1}
+  .hero .pct{font-family:var(--mono);font-size:12px;color:#999;margin-top:4px}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0;border:1px solid var(--gris-cl);border-top:none}
+  .cards .c{padding:14px 16px;border-right:1px solid var(--gris-cl);border-top:1px solid var(--gris-cl)}
+  .cards .c:last-child{border-right:none}
+  .cards .k{font-size:11px;color:var(--gris);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+  .cards .v{font-family:var(--mono);font-weight:500;font-size:19px}
+
+  .bar-wrap{margin-top:18px}
+  .bar{display:flex;height:26px;border:1px solid var(--gris-cl);overflow:hidden}
+  .bar .b0{background:var(--negro)}
+  .bar .b1{background:var(--rojo)}
+  .bar-lab{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--gris);margin-top:6px}
+
+  .note{font-size:12.5px;color:var(--gris);margin-top:20px;padding-top:14px;border-top:1px dashed var(--gris-cl);line-height:1.7}
+  .note b{color:var(--negro);font-weight:600}
+
+  .viz{margin-top:24px;padding-top:18px;border-top:1px solid var(--gris-cl)}
+  .viz svg{display:block;width:100%;height:auto;border:1px solid var(--gris-cl);background:var(--blanco)}
+  .viz-cap{font-family:var(--mono);font-size:11.5px;margin-top:8px;letter-spacing:.02em}
+
+  .decide{margin-top:26px;padding-top:20px;border-top:3px solid var(--rojo)}
+  .cmp{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--gris-cl);margin-top:6px}
+  .cmp-c{padding:14px 16px;border-right:1px solid var(--gris-cl)}
+  .cmp-c:last-child{border-right:none}
+  .cmp-c .k{font-size:11px;color:var(--gris);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+  .cmp-c .v{font-family:var(--mono);font-weight:700;font-size:22px}
+  .cmp-c.neg .v{color:var(--tinta-rojo)}
+  .cmp-c.pos .v{color:#0f6e56}
+  .cmp-c .sub{font-family:var(--mono);font-size:11px;color:var(--gris);margin-top:4px}
+  .verdict{margin-top:14px;padding:14px 16px;background:var(--gris);color:var(--blanco);font-family:var(--disp);font-weight:600;font-size:15px;letter-spacing:.02em;line-height:1.45}
+  .verdict.go{background:#0f6e56}
+  .verdict.no{background:var(--tinta-rojo)}
+  @media(max-width:520px){.cmp{grid-template-columns:1fr}}
+
+  footer{background:var(--blanco);border:1px solid var(--gris-cl);border-top:3px solid var(--negro);padding:14px 22px;font-family:var(--mono);font-size:10.5px;color:var(--gris);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+  footer b{color:var(--negro)}
+  @media(max-width:520px){.seg{grid-template-columns:1fr}.seg button{border-right:none;border-bottom:1.5px solid var(--negro)}.seg button:last-child{border-bottom:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <h1>DETALIA<span> ·</span> INGENIERÍA</h1>
+      <span class="slogan">Precisión en cada detalle.</span>
+    </div>
+    <div class="meta">
+      <div><b>Código</b>DET-FIN-RBL-001</div>
+      <div><b>Versión</b>1.1</div>
+      <div><b>Tipo</b>Herramienta de cálculo</div>
+      <div><b>Aplicación</b>Rebalanceo CLMM v3</div>
+    </div>
+  </header>
+
+  <div class="panel">
+    <h2>Calculadora de rebalanceo · Uniswap v3</h2>
+    <p class="lead">Calcula cuánto swapear para reabrir una posición de liquidez concentrada cuando el precio sale de su rango. Basado en las fórmulas 6.29 y 6.30 del whitepaper v3.</p>
+
+    <div class="seg" id="seg">
+      <button data-mode="up" class="on">Precio salió por arriba<span class="sub">quedaste 100% token1</span></button>
+      <button data-mode="dn">Precio salió por abajo<span class="sub">quedaste 100% token0</span></button>
+    </div>
+
+    <p class="grp-title">Estado actual</p>
+    <div class="grid">
+      <div class="field"><label>Símbolo token0</label><input id="s0" type="text" value="ETH"></div>
+      <div class="field"><label>Símbolo token1</label><input id="s1" type="text" value="USDC"></div>
+      <div class="field"><label id="capLab">token1 que tienes</label><input id="cap" type="number" value="10000" min="0" step="any"></div>
+    </div>
+
+    <p class="grp-title" style="margin-top:18px">Nueva posición a abrir</p>
+    <div class="grid">
+      <div class="field"><label>Precio actual P (token0/token1)</label><input id="P" type="number" value="3500" min="0" step="any"></div>
+      <div class="field"><label>Límite inferior Pₐ</label><input id="Pa" type="number" value="3300" min="0" step="any"></div>
+      <div class="field"><label>Límite superior P_b</label><input id="Pb" type="number" value="3900" min="0" step="any"></div>
+      <div class="field"><label>Comisión del pool (swap)</label>
+        <select id="fee">
+          <option value="0.0005">0.05 %</option>
+          <option value="0.003" selected>0.30 %</option>
+          <option value="0.01">1.00 %</option>
+          <option value="0">Sin comisión (teórico)</option>
+        </select>
+      </div>
+    </div>
+    <p class="warn" id="warn"></p>
+
+    <div class="results">
+      <div class="hero">
+        <div>
+          <div class="k" id="heroLab">token1 a swapear → token0</div>
+          <div class="pct" id="heroPct"></div>
+        </div>
+        <div class="v" id="heroVal">—</div>
+      </div>
+      <div class="cards">
+        <div class="c"><div class="k" id="k0">token0 en posición</div><div class="v" id="a0">—</div></div>
+        <div class="c"><div class="k" id="k1">token1 en posición</div><div class="v" id="a1">—</div></div>
+        <div class="c"><div class="k">Comisión pagada</div><div class="v" id="feeC">—</div></div>
+        <div class="c"><div class="k">Liquidez L</div><div class="v" id="L">—</div></div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar"><div class="b0" id="bar0" style="width:50%"></div><div class="b1" id="bar1" style="width:50%"></div></div>
+        <div class="bar-lab"><span id="lab0">token0</span><span id="lab1">token1</span></div>
+      </div>
+    </div>
+
+    <div class="viz">
+      <p class="grp-title">Posición sobre el eje de precio</p>
+      <svg viewBox="0 0 760 210" role="img" preserveAspectRatio="xMidYMid meet">
+        <title>Bloque de liquidez de la posición sobre el eje de precio</title>
+        <line x1="30" y1="170" x2="730" y2="170" stroke="var(--gris-cl)" stroke-width="1"/>
+        <rect id="cBlock" x="0" y="30" width="0" height="140" fill="#1D9E75" fill-opacity="0.28" stroke="#1D9E75" stroke-width="1.5"/>
+        <text x="34" y="46" font-size="11" fill="var(--gris)" font-family="JetBrains Mono, monospace">liquidez</text>
+        <line id="cPL" x1="0" y1="24" x2="0" y2="176" stroke="#E02020" stroke-width="2"/>
+        <circle id="cPD" cx="0" cy="24" r="4" fill="#E02020"/>
+        <text id="cTP" x="0" y="16" text-anchor="middle" font-size="11" font-weight="700" fill="#E02020" font-family="JetBrains Mono, monospace">P</text>
+        <text id="cTA" x="0" y="190" text-anchor="middle" font-size="11" fill="var(--gris)" font-family="JetBrains Mono, monospace">Pₐ</text>
+        <text id="cTB" x="0" y="190" text-anchor="middle" font-size="11" fill="var(--gris)" font-family="JetBrains Mono, monospace">P_b</text>
+      </svg>
+      <p class="viz-cap" id="cCap">—</p>
+    </div>
+
+    <div class="decide">
+      <p class="grp-title">¿Conviene mover el rango?</p>
+      <div class="grid">
+        <div class="field"><label>Rendimiento estimado del rango (APR %)</label><input id="apr" type="number" value="40" min="0" step="any"></div>
+        <div class="field"><label>Horizonte que esperas mantenerlo (días)</label><input id="dias" type="number" value="14" min="0" step="any"></div>
+        <div class="field"><label>Tiempo esperado dentro de rango (%)</label><input id="tir" type="number" value="80" min="0" max="100" step="any"></div>
+        <div class="field"><label id="gasLab">Costo de gas (token1)</label><input id="gas" type="number" value="5" min="0" step="any"></div>
+      </div>
+      <div class="cmp">
+        <div class="cmp-c neg"><div class="k">Costo de mover</div><div class="v" id="costo">—</div><div class="sub" id="costoSub"></div></div>
+        <div class="cmp-c pos"><div class="k">Comisiones esperadas (horizonte)</div><div class="v" id="ingreso">—</div><div class="sub" id="ingSub"></div></div>
+      </div>
+      <div class="verdict" id="verdict">—</div>
+    </div>
+
+    <p class="note"><b>Cómo se calcula.</b> El monto a swapear es el que iguala tus dos saldos al ratio que exige la posición al precio P. La comisión se descuenta del activo que entra al swap, así que el resultado es <b>neto</b>. No incluye <i>price impact</i> ni gas: en montos grandes deja un pequeño margen. Esto es la mecánica del protocolo, <b>no asesoría financiera</b> — rebalancear realiza la pérdida divergente.</p>
+  </div>
+
+  <footer>
+    <span>Detalia Ingeniería S.A.S. · <b>Precisión en cada detalle.</b></span>
+    <span>contacto@detaliaingenieria.co</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var mode='up';
+  var $=function(id){return document.getElementById(id);};
+  function fmt(n,d){if(!isFinite(n))return'—';return Number(n).toLocaleString('es-CO',{minimumFractionDigits:d,maximumFractionDigits:d});}
+  function dec(n){n=Math.abs(n);return n>=1000?2:n>=1?4:6;}
+
+  function calc(){
+    var s0=$('s0').value||'token0', s1=$('s1').value||'token1';
+    var cap=parseFloat($('cap').value), P=parseFloat($('P').value), Pa=parseFloat($('Pa').value), Pb=parseFloat($('Pb').value), f=parseFloat($('fee').value);
+    var W=$('warn'); W.textContent='';
+    if(!(cap>0&&P>0&&Pa>0&&Pb>0)){W.textContent='> Ingresa valores positivos en todos los campos.';return;}
+    if(Pa>=Pb){W.textContent='> El límite inferior debe ser menor que el superior.';return;}
+
+    var rP=Math.sqrt(P), rA=Math.sqrt(Pa), rB=Math.sqrt(Pb);
+    var c0=1/rP-1/rB, c1=rP-rA;
+    var a0,a1,L,swap,swapAsset,swapToward,feeAsset,feeAmt,V;
+
+    if(mode==='up'){            // tienes token1 (cap = q1), swapeas token1 -> token0
+      V=cap; swapAsset=s1; swapToward=s0; feeAsset=s1;
+      if(P<=Pa){ a1=V; a0=0; swap=0; L=V/(rB-rA); W.textContent='> Precio por debajo del nuevo rango: quedaría 100% '+s1+', no swapeas nada.'; }
+      else if(P>=Pb){ swap=V; var rec=V*(1-f)/P; a0=rec; a1=0; L=a0/(1/rA-1/rB); W.textContent='> Precio por encima del nuevo rango: quedaría 100% '+s0+', swapeas todo.'; }
+      else { swap=V*P*c0/((1-f)*c1+P*c0); var rec0=swap*(1-f)/P; a0=rec0; a1=V-swap; L=a1/c1; }
+      feeAmt=swap*f;
+    } else {                    // tienes token0 (cap = q0), swapeas token0 -> token1
+      var q0=cap; V=q0*P; swapAsset=s0; swapToward=s1; feeAsset=s0;
+      if(P>=Pb){ a0=q0; a1=0; swap=0; L=q0/(1/rA-1/rB); W.textContent='> Precio por encima del nuevo rango: quedaría 100% '+s0+', no swapeas nada.'; }
+      else if(P<=Pa){ swap=q0; var recv=q0*(1-f)*P; a1=recv; a0=0; L=a1/(rB-rA); W.textContent='> Precio por debajo del nuevo rango: quedaría 100% '+s1+', swapeas todo.'; }
+      else { swap=q0*c1/(c1+(1-f)*P*c0); var recv2=swap*(1-f)*P; a0=q0-swap; a1=recv2; L=a0/c0; }
+      feeAmt=swap*f;
+    }
+
+    $('heroLab').textContent=swapAsset+' a swapear → '+swapToward;
+    $('heroVal').textContent=fmt(swap,dec(swap))+' '+swapAsset;
+    var base=(mode==='up')?cap:cap;
+    $('heroPct').textContent=base>0?fmt(swap/base*100,1)+'% de tu '+swapAsset:'';
+    $('k0').textContent=s0+' en posición'; $('k1').textContent=s1+' en posición';
+    $('a0').textContent=fmt(a0,dec(a0))+' '+s0;
+    $('a1').textContent=fmt(a1,dec(a1))+' '+s1;
+    $('feeC').textContent=fmt(feeAmt,dec(feeAmt))+' '+feeAsset;
+    $('L').textContent=fmt(L,2);
+
+    var v0=a0*P, v1=a1, tot=v0+v1, p0=tot>0?v0/tot*100:0;
+    $('bar0').style.width=p0+'%'; $('bar1').style.width=(100-p0)+'%';
+    $('lab0').textContent=s0+' '+fmt(p0,0)+'%'; $('lab1').textContent=fmt(100-p0,0)+'% '+s1;
+
+    var apr=parseFloat($('apr').value), dias=parseFloat($('dias').value), tir=parseFloat($('tir').value), gas=parseFloat($('gas').value);
+    if(!(gas>=0)) gas=0;
+    var feeT1=feeAmt*(feeAsset===s1?1:P);
+    var costoTotal=feeT1+gas;
+    $('gasLab').textContent='Costo de gas ('+s1+')';
+    $('costo').textContent=fmt(costoTotal,2)+' '+s1;
+    $('costoSub').textContent='swap '+fmt(feeT1,2)+' + gas '+fmt(gas,2);
+    var Vd=$('verdict');
+    if(apr>0&&dias>0&&tir>=0){
+      var ingDia=V*(apr/100)/365*(tir/100);
+      var ingHor=ingDia*dias, net=ingHor-costoTotal, be=ingDia>0?costoTotal/ingDia:Infinity;
+      $('ingreso').textContent=fmt(ingHor,2)+' '+s1;
+      $('ingSub').textContent='≈ '+fmt(ingDia,2)+' '+s1+'/día';
+      if(net>0){ Vd.className='verdict go'; Vd.textContent='Conviene mover · recuperas el costo en ~'+fmt(be,1)+' días, dentro de tu horizonte de '+fmt(dias,0)+'. Resultado neto +'+fmt(net,2)+' '+s1+'.'; }
+      else{ Vd.className='verdict no'; Vd.textContent='No conviene aún · necesitarías ~'+fmt(be,1)+' días en rango para recuperar el costo; tu horizonte es '+fmt(dias,0)+'. Resultado neto '+fmt(net,2)+' '+s1+'.'; }
+    } else {
+      $('ingreso').textContent='—'; $('ingSub').textContent='';
+      Vd.className='verdict'; Vd.textContent='Ingresa rendimiento, horizonte y tiempo en rango para evaluar.';
+    }
+
+    drawChart(P,Pa,Pb,s0,s1);
+  }
+
+  function drawChart(P,Pa,Pb,s0,s1){
+    var g=function(id){return document.getElementById(id);};
+    var padL=30,padR=30,W=760,baseY=170,topY=30,inW=W-padL-padR;
+    var lo=Math.min(Pa,P), hi=Math.max(Pb,P), span=(hi-lo)||1;
+    var Dmin=lo-span*0.25, Dmax=hi+span*0.25;
+    function xpx(p){var x=padL+(p-Dmin)/(Dmax-Dmin)*inW;return Math.max(padL,Math.min(W-padR,x));}
+    var inR=P>=Pa&&P<=Pb, col=inR?'#1D9E75':'#888780';
+    var bx=xpx(Pa), bw=Math.max(0,xpx(Pb)-xpx(Pa));
+    var bl=g('cBlock'); bl.setAttribute('x',bx); bl.setAttribute('width',bw);
+    bl.setAttribute('fill',col); bl.setAttribute('stroke',col);
+    var px=xpx(P);
+    g('cPL').setAttribute('x1',px); g('cPL').setAttribute('x2',px); g('cPD').setAttribute('cx',px);
+    g('cTP').setAttribute('x',px); g('cTP').textContent='P '+fmt(P,0);
+    g('cTA').setAttribute('x',xpx(Pa)); g('cTA').textContent='Pₐ '+fmt(Pa,0);
+    g('cTB').setAttribute('x',xpx(Pb)); g('cTB').textContent='P_b '+fmt(Pb,0);
+    var c=g('cCap');
+    if(inR){c.textContent='● En rango · la posición está activa y gana comisiones';c.style.color='#0f6e56';}
+    else if(P>Pb){c.textContent='○ Fuera de rango (precio por encima) · 100% '+s1+', inactiva';c.style.color='#7a0f0f';}
+    else{c.textContent='○ Fuera de rango (precio por debajo) · 100% '+s0+', inactiva';c.style.color='#7a0f0f';}
+  }
+
+  document.querySelectorAll('#seg button').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('#seg button').forEach(function(x){x.classList.remove('on');});
+      b.classList.add('on'); mode=b.dataset.mode;
+      $('capLab').textContent=(mode==='up'?'token1 que tienes':'token0 que tienes');
+      calc();
+    });
+  });
+  ['s0','s1','cap','P','Pa','Pb','fee','apr','dias','tir','gas'].forEach(function(id){$(id).addEventListener('input',calc);});
+  calc();
+})();
+</script>
+</body>
+</html>
